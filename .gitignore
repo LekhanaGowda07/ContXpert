@@ -1,0 +1,29 @@
+
+# Environment variables and credentials
+.env
+.env.*
+!.env.example
+
+# Student records and private datasets
+students.csv
+attendance.csv
+cie.csv
+fees.csv
+notifications.csv
+timetable.csv
+contxpert_students.csv
+contxpert_students_with_attendance.csv
+data/
+private_data/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Local databases and logs
+*.db
+*.sqlite
+*.sqlite3
+*.log
