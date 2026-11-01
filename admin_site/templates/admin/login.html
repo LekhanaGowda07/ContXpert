@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · ContXpert Admin</title>
+<link rel="stylesheet" href="{{ url_for('console.static', filename='admin.css') }}"></head>
+<body><div class="loginwrap"><div class="loginbox">
+  <div class="logo" style="justify-content:center;padding-bottom:20px"><i>C</i><div>ContXpert<small>Admin console</small></div></div>
+  {% with msgs = get_flashed_messages(with_categories=true) %}{% for cat, m in msgs %}<div class="flash {{ cat }}">{{ m }}</div>{% endfor %}{% endwith %}
+  <form class="card" method="post">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <label for="p">Admin password</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" autofocus required>
+    <p class="hint">This is the <code>ADMIN_KEY</code> from your server settings.</p>
+    <button class="btn" style="width:100%;margin-top:6px" type="submit">Sign in</button>
+  </form>
+</div></div></body></html>

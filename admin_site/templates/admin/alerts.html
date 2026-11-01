@@ -1,0 +1,21 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import csrf_field, pct_badge with context %}
+{% block title %}Alerts{% endblock %}
+{% block content %}
+<h1>Attendance alerts</h1>
+<p class="sub">A WhatsApp alert goes out automatically every day at the scheduled hour to linked students below {{ '%g'|format(threshold) }}% (once per cool-down period). You can also send them now.</p>
+<form class="card" method="post" onsubmit="return confirm('Send WhatsApp alerts now?')">{{ csrf_field() }}
+  <button class="btn" type="submit">Send alerts now</button>
+  <label style="display:inline-flex;gap:8px;align-items:center;margin:0 0 0 14px;font-weight:500"><input type="checkbox" name="force" value="1" style="width:auto"> Ignore the cool-down (re-send to everyone below the threshold)</label>
+</form>
+<div class="grid g2">
+<div class="card tw"><h2>Students below threshold ({{ low|length }})</h2>
+{% if low %}<table><tr><th>Student</th><th>Subjects short</th><th>Lowest</th><th>WhatsApp</th></tr>
+  {% for s in low %}<tr><td><a href="{{ url_for('console.student_detail', usn=s.usn) }}">{{ s.name }}</a><div class="muted">{{ s.usn }}</div></td><td>{{ s.n_subjects }}</td>
+    <td>{{ pct_badge(s.worst) }}</td><td>{% if s.linked %}<span class="badge b-ok">Will be alerted</span>{% else %}<span class="badge b-grey">Not linked</span>{% endif %}</td></tr>{% endfor %}
+</table>{% else %}<div class="empty">Everyone is above the threshold 🎉</div>{% endif %}</div>
+<div class="card tw"><h2>Recently alerted</h2>
+{% if recent %}<table><tr><th>Student</th><th>Sent</th></tr>
+  {% for r in recent %}<tr><td>{{ r.name or r.usn }}</td><td>{{ r.sent_at|when }}</td></tr>{% endfor %}</table>
+{% else %}<div class="empty">No alerts sent yet.</div>{% endif %}</div>
+</div>
+{% endblock %}

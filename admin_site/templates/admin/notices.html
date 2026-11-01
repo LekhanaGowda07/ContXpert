@@ -1,0 +1,22 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import csrf_field with context %}
+{% block title %}Notices{% endblock %}
+{% block content %}
+<h1>Notices</h1><p class="sub">Notices appear to students when they open <b>Notifications</b> on WhatsApp.</p>
+<form class="card" method="post">{{ csrf_field() }}<h2>Publish a notice</h2>
+  <div class="row">
+    <div><label>Date</label><input type="date" name="date" value="{{ today }}" required></div>
+    <div><label>Department</label><select name="department"><option value="ALL">All departments</option>{% for d in depts %}<option>{{ d }}</option>{% endfor %}</select></div>
+    <div><label>Section</label><input name="section" placeholder="ALL" value="ALL"></div>
+  </div>
+  <div style="margin-bottom:14px"><label>Title</label><input name="title" maxlength="120" required></div>
+  <div style="margin-bottom:14px"><label>Message</label><textarea name="body" required></textarea></div>
+  <button class="btn" type="submit">Publish</button>
+</form>
+<div class="card tw"><h2>Published notices</h2>
+{% if rows %}<table><tr><th>Date</th><th>For</th><th>Notice</th><th></th></tr>
+  {% for n in rows %}<tr><td class="nowrap">{{ n.date }}</td><td class="nowrap">{{ n.department }} / {{ n.section }}</td>
+    <td><b>{{ n.title }}</b><div class="muted">{{ n.body }}</div></td>
+    <td class="right"><form class="inline" method="post" action="{{ url_for('console.notice_delete', nid=n.id) }}" onsubmit="return confirm('Delete this notice?')">{{ csrf_field() }}<button class="btn danger sm" type="submit">Delete</button></form></td></tr>{% endfor %}
+</table>{% else %}<div class="empty">No notices yet.</div>{% endif %}
+</div>
+{% endblock %}

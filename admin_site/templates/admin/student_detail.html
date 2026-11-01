@@ -1,0 +1,45 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import cert_badge, csrf_field, pct_badge with context %}
+{% block title %}{{ s.name }}{% endblock %}
+{% block content %}
+<p style="margin:0 0 8px"><a href="{{ url_for('console.students') }}">← Students</a></p>
+<div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap">
+  <div><h1>{{ s.name }}</h1><p class="sub">{{ s.usn }} · {{ s.department }} {{ s.section }} · Semester {{ s.semester }}{% if s.email %} · {{ s.email }}{% endif %}</p></div>
+  <a class="btn sec" href="{{ url_for('console.student_edit', usn=s.usn) }}">Edit details</a>
+</div>
+<div class="grid g2">
+  <div class="card"><h2>WhatsApp</h2>
+    {% if user %}<p><span class="badge b-ok">Linked</span> <span class="muted">{{ user.phone|mask_phone }} · since {{ user.registered_at|when }}</span></p>
+      <form method="post" action="{{ url_for('console.student_unlink', usn=s.usn) }}" onsubmit="return confirm('Unlink this number? The student will have to register again.')">{{ csrf_field() }}<button class="btn danger sm" type="submit">Unlink number</button></form>
+    {% else %}<p><span class="badge b-grey">Not linked</span> <span class="muted">The student has not registered on WhatsApp yet.</span></p>{% endif %}
+  </div>
+  <div class="card"><h2>Fees</h2>
+    <form method="post" action="{{ url_for('console.student_fees', usn=s.usn) }}">{{ csrf_field() }}
+      <div class="row" style="margin-bottom:10px">
+        <div><label>Total fee (₹)</label><input name="total_fee" type="number" min="0" step="any" value="{{ '%g'|format(fees.total) if fees else 0 }}" required></div>
+        <div><label>Paid (₹)</label><input name="paid" type="number" min="0" step="any" value="{{ '%g'|format(fees.paid) if fees else 0 }}" required></div>
+        <div><label>Due date</label><input name="due_date" type="date" value="{{ fees.due_date if fees else '' }}"></div>
+      </div>
+      <button class="btn sm" type="submit">Save fees</button>
+      {% if fees %}<span class="muted" style="margin-left:10px">Due now: {{ fees.due|inr }}</span>{% endif %}
+    </form>
+  </div>
+</div>
+<div class="card tw"><h2>Attendance <span class="muted" style="font-weight:400">· overall {{ pct_badge(att.overall) if att.subjects else '-' }}</span></h2>
+  {% if att.subjects %}<table><tr><th>Subject</th><th>Attended / Held</th><th>%</th><th>Status</th></tr>
+    {% for a in att.subjects %}<tr><td>{{ a.name }} <span class="muted">{{ a.code }}</span></td><td>{{ a.attended }} / {{ a.held }}</td><td>{{ pct_badge(a.pct) }}</td>
+      <td>{% if a.short %}<span class="badge b-bad">Needs {{ a.need }} more classes</span>{% else %}<span class="muted">Can miss {{ a.can_miss }}</span>{% endif %}</td></tr>{% endfor %}
+  </table>{% else %}<div class="empty">No attendance records.</div>{% endif %}
+</div>
+<div class="card tw"><h2>CIE marks</h2>
+  {% if cie %}<table><tr><th>Subject</th>{% for k, label, mx in comps %}<th>{{ label }} (/{{ mx }})</th>{% endfor %}<th>Total so far</th></tr>
+    {% for c in cie %}<tr><td>{{ c.name }} <span class="muted">{{ c.code }}</span></td>
+      {% for comp in c.components %}<td>{{ '%g'|format(comp.marks) if comp.marks is not none else '–' }}</td>{% endfor %}
+      <td>{{ '%g'|format(c.got) }} / {{ '%g'|format(c.done_max) }}</td></tr>{% endfor %}
+  </table>{% else %}<div class="empty">No CIE records.</div>{% endif %}
+</div>
+<div class="card tw"><h2>Certificate requests</h2>
+  {% if certs %}<table><tr><th>#</th><th>Certificate</th><th>Amount</th><th>Status</th><th>Requested</th></tr>
+    {% for c in certs %}<tr><td>{{ c.id }}</td><td>{{ certificates.get(c.cert_type, (c.cert_type,))[0] }}</td><td>{{ c.amount|inr }}</td><td>{{ cert_badge(c.status) }}</td><td>{{ c.created_at|when }}</td></tr>{% endfor %}
+  </table>{% else %}<div class="empty">No requests.</div>{% endif %}
+</div>
+{% endblock %}

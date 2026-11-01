@@ -1,0 +1,18 @@
+[
+ {"q": "What is the minimum attendance required to write exams?", "a": "You need at least *75% attendance in every subject* to be eligible for the semester end exam (SEE). Students below this may be detained in that subject."},
+ {"q": "How is CIE calculated?", "a": "CIE (Continuous Internal Evaluation) is out of *50 marks*: IA-1 (20) + IA-2 (20) + Assignment (10). Use the *CIE Calculator* in the menu to see what you need in the SEE."},
+ {"q": "What is SEE?", "a": "SEE is the Semester End Examination, conducted for 100 marks and scaled to 50. Final result = CIE (50) + scaled SEE (50). You need at least 35/100 in SEE and 40/100 overall to pass."},
+ {"q": "What is detention?", "a": "A student whose attendance is below the required minimum in a subject is detained in that subject and cannot appear for its SEE until the shortage is cleared as per college rules."},
+ {"q": "How do I apply for a bonafide or other certificate?", "a": "Choose *Certificates* from the menu, pick the certificate type and pay the fee online. I will track the request and message you here when it is ready."},
+ {"q": "What are the library timings?", "a": "The central library is open Monday to Saturday, 8:30 AM to 6:00 PM. Please confirm with the library for exam-time extensions."},
+ {"q": "What is the revaluation process?", "a": "After results are published, apply for revaluation within the notified window through the exam section and pay the prescribed fee per subject. Results are announced on the notice board."},
+ {"q": "How do I apply for a scholarship?", "a": "Scholarship details and deadlines are announced through notices. Visit the scholarship cell in the administrative block with your income certificate, marks card and fee receipt."},
+ {"q": "What are the college timings?", "a": "Classes run from 9:00 AM to 4:00 PM Monday to Friday and 9:00 AM to 1:15 PM on Saturday."},
+ {"q": "How can I contact the college office or department?", "a": "Visit the department office during working hours or contact the college office. Your HOD and class mentor can also help with academic queries."},
+ {"q": "What is a backlog and how do I clear it?", "a": "A backlog is a subject you did not pass. You can reappear for it in the next SEE by registering for the supplementary exam through the exam section."},
+ {"q": "What is the passing marks?", "a": "You must score at least *35 out of 100* in the SEE and at least *40 out of 100* in total (CIE + scaled SEE)."},
+ {"q": "When do exams start?", "a": "Exam dates are published as notices. Type *notifications* to see the latest circulars and timetables."},
+ {"q": "What if I lose my ID card?", "a": "Report the loss to the department office and apply for a duplicate ID card with the prescribed fee."},
+ {"q": "What documents are needed for a bonafide certificate?", "a": "Only your college ID is needed. Request it from the *Certificates* menu here - no paper form required."},
+ {"q": "What are the bus timings?", "a": "College bus routes and timings are published by the transport office. Please check the transport notice board for your route."}
+]

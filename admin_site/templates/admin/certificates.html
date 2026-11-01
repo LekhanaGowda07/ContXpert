@@ -1,0 +1,28 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import cert_badge, csrf_field with context %}
+{% block title %}Certificates{% endblock %}
+{% block content %}
+<h1>Certificate requests</h1><p class="sub">Paid requests appear first. Mark one <b>ready</b> and the student is told on WhatsApp to collect it.</p>
+<div class="tabs">
+  <a href="{{ url_for('console.certificates') }}" class="{{ 'on' if not status }}">All ({{ counts.ALL }})</a>
+  {% for s in ['PROCESSING','PENDING_PAYMENT','READY','CANCELLED'] %}
+  <a href="{{ url_for('console.certificates', status=s) }}" class="{{ 'on' if status == s }}">{{ cert_labels[s] }} ({{ counts[s] }})</a>{% endfor %}
+</div>
+<div class="card tw">
+{% if rows %}<table>
+  <tr><th>#</th><th>Student</th><th>Certificate</th><th>Amount</th><th>Status</th><th>Requested</th><th>WhatsApp</th><th></th></tr>
+  {% for c in rows %}<tr>
+    <td>{{ c.id }}</td>
+    <td><a href="{{ url_for('console.student_detail', usn=c.usn) }}">{{ c.name or '-' }}</a><div class="muted">{{ c.usn }}</div></td>
+    <td>{{ certificates.get(c.cert_type, (c.cert_type,))[0] }}</td>
+    <td>{{ c.amount|inr }}</td><td>{{ cert_badge(c.status) }}</td>
+    <td class="nowrap">{{ c.created_at|when }}</td><td class="muted nowrap">{{ c.phone|mask_phone }}</td>
+    <td class="right nowrap">
+      {% if c.status == 'PROCESSING' %}
+      <form class="inline" method="post" action="{{ url_for('console.cert_ready', req_id=c.id) }}">{{ csrf_field() }}<input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn sm" type="submit">Mark ready</button></form>
+      {% elif c.status == 'PENDING_PAYMENT' %}
+      <form class="inline" method="post" action="{{ url_for('console.cert_cancel', req_id=c.id) }}" onsubmit="return confirm('Cancel request #{{ c.id }}?')">{{ csrf_field() }}<input type="hidden" name="next" value="{{ request.full_path }}"><button class="btn sm danger" type="submit">Cancel</button></form>
+      {% endif %}
+    </td></tr>{% endfor %}
+</table>{% else %}<div class="empty">No requests here.</div>{% endif %}
+</div>
+{% endblock %}

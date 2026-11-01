@@ -1,0 +1,22 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import csrf_field with context %}
+{% block title %}{{ 'Add student' if is_new else 'Edit student' }}{% endblock %}
+{% block content %}
+<h1>{{ 'Add student' if is_new else 'Edit ' ~ s.usn }}</h1><p class="sub">Students verify themselves on WhatsApp with their USN and date of birth.</p>
+<form class="card" method="post" style="max-width:720px">{{ csrf_field() }}
+  <div class="row">
+    <div><label>USN</label><input name="usn" value="{{ s.usn or '' }}" {{ 'readonly' if not is_new else 'required' }}></div>
+    <div><label>Full name</label><input name="name" value="{{ s.name or '' }}" required></div>
+  </div>
+  <div class="row">
+    <div><label>Department</label><input name="department" value="{{ s.department or '' }}" placeholder="CSE" required></div>
+    <div><label>Section</label><input name="section" value="{{ s.section or '' }}" placeholder="A" required></div>
+    <div><label>Semester</label><input name="semester" type="number" min="1" max="12" value="{{ s.semester or '' }}" required></div>
+  </div>
+  <div class="row">
+    <div><label>Date of birth (DDMMYYYY)</label><input name="dob" inputmode="numeric" placeholder="{{ 'Leave blank to keep the current one' if not is_new else '15082005' }}" {{ 'required' if is_new }}></div>
+    <div><label>Email (optional)</label><input name="email" type="email" value="{{ s.email or '' }}"></div>
+  </div>
+  <button class="btn" type="submit">Save</button>
+  <a class="btn sec" href="{{ url_for('console.students') if is_new else url_for('console.student_detail', usn=s.usn) }}">Cancel</a>
+</form>
+{% endblock %}

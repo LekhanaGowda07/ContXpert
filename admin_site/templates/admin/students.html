@@ -1,0 +1,28 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import pct_badge with context %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap">
+  <div><h1>Students</h1><p class="sub">{{ total }} student{{ '' if total == 1 else 's' }} found.</p></div>
+  <a class="btn" href="{{ url_for('console.student_new') }}">+ Add student</a>
+</div>
+<form class="bar" method="get">
+  <div><label>Search</label><input name="q" value="{{ qs }}" placeholder="Name or USN"></div>
+  <div><label>Department</label><select name="dept"><option value="">All</option>{% for d in depts %}<option {{ 'selected' if d == dept }}>{{ d }}</option>{% endfor %}</select></div>
+  <div><label>WhatsApp</label><select name="linked"><option value="">All</option><option value="1" {{ 'selected' if linked == '1' }}>Linked</option><option value="0" {{ 'selected' if linked == '0' }}>Not linked</option></select></div>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="card tw">
+{% if rows %}<table>
+  <tr><th>USN</th><th>Name</th><th>Dept / Sec</th><th>Sem</th><th>Attendance</th><th>Fee due</th><th>WhatsApp</th></tr>
+  {% for s in rows %}<tr>
+    <td><a href="{{ url_for('console.student_detail', usn=s.usn) }}">{{ s.usn }}</a></td><td>{{ s.name }}</td>
+    <td>{{ s.department }} / {{ s.section }}</td><td>{{ s.semester }}</td><td>{{ pct_badge(s.att_pct) }}</td>
+    <td>{% if s.fee_due > 0 %}<span class="badge b-warn">{{ s.fee_due|inr }}</span>{% else %}<span class="muted">-</span>{% endif %}</td>
+    <td>{% if s.linked %}<span class="badge b-ok">Linked</span>{% else %}<span class="badge b-grey">Not linked</span>{% endif %}</td></tr>{% endfor %}
+</table>
+<div class="pager">Page {{ pg }} of {{ pages }}
+  {% if pg > 1 %}<a class="btn sec sm" href="{{ url_for('console.students', q=qs, dept=dept, linked=linked, page=pg-1) }}">← Prev</a>{% endif %}
+  {% if pg < pages %}<a class="btn sec sm" href="{{ url_for('console.students', q=qs, dept=dept, linked=linked, page=pg+1) }}">Next →</a>{% endif %}</div>
+{% else %}<div class="empty">No students match.</div>{% endif %}
+</div>
+{% endblock %}

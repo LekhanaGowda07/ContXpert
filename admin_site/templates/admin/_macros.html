@@ -1,0 +1,12 @@
+{% macro cert_badge(status) -%}
+{%- set cls = {'PENDING_PAYMENT':'b-warn','PROCESSING':'b-info','READY':'b-ok','CANCELLED':'b-grey'}.get(status,'b-grey') -%}
+<span class="badge {{ cls }}">{{ cert_labels.get(status, status) }}</span>
+{%- endmacro %}
+
+{% macro csrf_field() -%}<input type="hidden" name="csrf" value="{{ csrf }}">{%- endmacro %}
+
+{% macro pct_badge(p) -%}
+{%- if p is none -%}<span class="muted">-</span>
+{%- elif p|float < threshold -%}<span class="badge b-bad">{{ '%.1f'|format(p|float) }}%</span>
+{%- else -%}<span class="badge b-ok">{{ '%.1f'|format(p|float) }}%</span>{%- endif -%}
+{%- endmacro %}

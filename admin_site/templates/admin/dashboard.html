@@ -1,0 +1,29 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import cert_badge with context %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1><p class="sub">Everything that needs attention, at a glance.</p>
+<div class="grid g4" style="margin-bottom:18px">
+  <a class="stat {{ 'hot' if stats.to_process }}" href="{{ url_for('console.certificates', status='PROCESSING') }}"><b>{{ stats.to_process }}</b><span>Certificates to process (paid)</span></a>
+  <a class="stat" href="{{ url_for('console.certificates', status='PENDING_PAYMENT') }}"><b>{{ stats.awaiting_payment }}</b><span>Awaiting payment</span></a>
+  <a class="stat" href="{{ url_for('console.alerts_page') }}"><b>{{ stats.low_attendance }}</b><span>Students below {{ '%g'|format(threshold) }}% attendance</span></a>
+  <a class="stat" href="{{ url_for('console.students') }}"><b>{{ stats.fee_due }}</b><span>Students with fees due ({{ stats.fee_due_amount|inr }})</span></a>
+  <a class="stat" href="{{ url_for('console.students') }}"><b>{{ stats.students }}</b><span>Students in database</span></a>
+  <a class="stat" href="{{ url_for('console.students', linked='1') }}"><b>{{ stats.linked }}</b><span>Students linked on WhatsApp</span></a>
+</div>
+<div class="grid g2">
+  <div class="card">
+    <h2>Latest certificate requests</h2>
+    {% if recent %}<div class="tw"><table>
+      <tr><th>#</th><th>Student</th><th>Certificate</th><th>Status</th></tr>
+      {% for c in recent %}<tr><td>{{ c.id }}</td>
+        <td><a href="{{ url_for('console.student_detail', usn=c.usn) }}">{{ c.name or c.usn }}</a></td>
+        <td>{{ certificates.get(c.cert_type, (c.cert_type,))[0] }}</td><td>{{ cert_badge(c.status) }}</td></tr>{% endfor %}
+    </table></div><p style="margin:12px 0 0"><a href="{{ url_for('console.certificates') }}">View all →</a></p>
+    {% else %}<div class="empty">No requests yet.</div>{% endif %}
+  </div>
+  <div class="card">
+    <h2>System</h2>
+    <dl class="kv">{% for k, v in system.items() %}<dt>{{ k }}</dt><dd>{{ v }}</dd>{% endfor %}</dl>
+  </div>
+</div>
+{% endblock %}

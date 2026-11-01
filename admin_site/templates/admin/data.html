@@ -1,0 +1,27 @@
+{% extends 'admin/base.html' %}{% from 'admin/_macros.html' import csrf_field with context %}
+{% block title %}Data{% endblock %}
+{% block content %}
+<h1>Data (CSV)</h1>
+<p class="sub">Your data lives in PostgreSQL. Use this page to bulk-update it from a CSV (e.g. exported from Contineo) or to download a backup.</p>
+<div class="card" style="background:var(--info-bg);color:var(--info);border-color:transparent">
+  <b>Merge</b> updates matching rows and adds new ones (nothing is deleted). <b>Replace</b> wipes that table first and loads the file.
+  If the file has a problem, nothing is changed.
+</div>
+<div class="grid g2">
+{% for n in order %}
+<div class="card"><h2 style="text-transform:capitalize">{{ n }} <span class="badge b-grey">{{ counts[n] }} rows</span></h2>
+  <p class="muted" style="margin-top:-6px">{{ help[n] }}</p>
+  <p class="hint">Columns: <code>{{ cols[n]|join(', ') }}</code></p>
+  <form method="post" action="{{ url_for('console.data_import', name=n) }}" enctype="multipart/form-data">{{ csrf_field() }}
+    <input type="file" name="file" accept=".csv,text/csv" required style="margin-bottom:10px">
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:10px">
+      <label style="margin:0;font-weight:500"><input type="radio" name="mode" value="merge" checked style="width:auto"> Merge</label>
+      <label style="margin:0;font-weight:500"><input type="radio" name="mode" value="replace" style="width:auto"> Replace all</label>
+    </div>
+    <button class="btn sm" type="submit">Upload</button>
+    <a class="btn sec sm" href="{{ url_for('console.data_export', name=n) }}">Download current CSV</a>
+  </form>
+</div>
+{% endfor %}
+</div>
+{% endblock %}
