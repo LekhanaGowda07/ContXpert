@@ -1,111 +1,106 @@
-"""Optional LLM helper (Anthropic Messages API over plain HTTP). Returns None when no key / on any error,
-so every feature keeps working without it."""
-import json
+"""Hosted AI helper with automatic provider fallback.
+Provider order defaults to Gemini -> Cloudflare Workers AI -> Groq.
+Only configured providers are called. Returns None if all configured providers fail.
+"""
 import logging
-import re
-
 import requests
-
 import config
 
 log = logging.getLogger("llm")
-
-
-def enabled():
-    return bool(config.GEMINI_API_KEY and config.GEMINI_MODEL) or bool(config.ANTHROPIC_API_KEY)
-
-
-def _gemini(system, user, max_tokens, json_mode=False):
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{config.GEMINI_MODEL}:generateContent"
-    gen = {"maxOutputTokens": max_tokens, "temperature": 0.7}
-    if json_mode:
-        gen["responseMimeType"] = "application/json"
-    r = requests.post(url, headers={"x-goog-api-key": config.GEMINI_API_KEY, "content-type": "application/json"},
-                      json={"system_instruction": {"parts": [{"text": system}]},
-                            "contents": [{"role": "user", "parts": [{"text": user}]}],
-                            "generationConfig": gen}, timeout=25)
-    r.raise_for_status()
-    parts = r.json()["candidates"][0]["content"]["parts"]
-    return "".join(p.get("text", "") for p in parts).strip() or None
-
-
-def complete(system, user, max_tokens=400, json_mode=False):
-    if not enabled():
-        return None
-    try:
-        if config.GEMINI_API_KEY and config.GEMINI_MODEL:
-            return _gemini(system, user, max_tokens, json_mode)
-        r = requests.post(
-            "https://api.anthropic.com/v1/messages",
-            headers={"x-api-key": config.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01",
-                     "content-type": "application/json"},
-            json={"model": config.ANTHROPIC_MODEL, "max_tokens": max_tokens, "system": system,
-                  "messages": [{"role": "user", "content": user}]},
-            timeout=25)
-        r.raise_for_status()
-        return "".join(b.get("text", "") for b in r.json().get("content", [])).strip() or None
-    except Exception as e:  # network, auth, quota ...
-        log.warning("LLM call failed: %s", e)
-        return None
-
+TIMEOUT = (8, 35)
 
 CHAT_SYSTEM = (
     "You are ContXpert, a friendly WhatsApp assistant for engineering college students. "
     "Respond naturally to everyday messages, greetings, emotions, and general questions. "
     "Be warm, respectful, concise, and conversational (usually 1-4 short sentences). "
-    "You may help with general learning and technology questions. For official college-specific "
-    "facts such as fees, attendance records, exam dates, marks, or policies, never invent details; "
-    "say that the student should use the relevant ContXpert menu or contact the college office. "
-    "Do not claim to have performed real-world actions. Use plain text suitable for WhatsApp."
+    "You may help with general learning, programming, English practice, interview preparation, "
+    "and career questions. For official college-specific facts such as fees, attendance records, "
+    "exam dates, marks, or policies, never invent details; ask the student to use the relevant "
+    "ContXpert service or contact the college office. Do not claim to have performed real-world "
+    "actions. Use plain text suitable for WhatsApp."
 )
+
+def _configured_providers():
+    available = {
+        "gemini": bool(config.GEMINI_API_KEY),
+        "cloudflare": bool(config.CLOUDFLARE_ACCOUNT_ID and config.CLOUDFLARE_API_TOKEN),
+        "groq": bool(config.GROQ_API_KEY),
+    }
+    order = config.AI_PROVIDER_ORDER or ["gemini", "cloudflare", "groq"]
+    return [name for name in order if available.get(name)]
+
+def enabled():
+    return bool(_configured_providers())
+
+def _post_json(url, headers, payload):
+    response = requests.post(url, headers=headers, json=payload, timeout=TIMEOUT)
+    response.raise_for_status()
+    return response.json()
+
+def _gemini(system, user, max_tokens):
+    url = (f"https://generativelanguage.googleapis.com/v1beta/models/"
+           f"{config.GEMINI_MODEL}:generateContent")
+    payload = {
+        "systemInstruction": {"parts": [{"text": system}]},
+        "contents": [{"role": "user", "parts": [{"text": user}]}],
+        "generationConfig": {"maxOutputTokens": max_tokens, "temperature": 0.7},
+    }
+    data = _post_json(url, {"x-goog-api-key": config.GEMINI_API_KEY,
+                            "Content-Type": "application/json"}, payload)
+    candidates = data.get("candidates") or []
+    if not candidates:
+        raise RuntimeError("Gemini returned no candidates")
+    parts = candidates[0].get("content", {}).get("parts", [])
+    answer = "".join(part.get("text", "") for part in parts).strip()
+    if not answer:
+        raise RuntimeError("Gemini returned an empty response")
+    return answer
+
+def _cloudflare(system, user, max_tokens):
+    url = (f"https://api.cloudflare.com/client/v4/accounts/"
+           f"{config.CLOUDFLARE_ACCOUNT_ID}/ai/v1/chat/completions")
+    payload = {
+        "model": config.CLOUDFLARE_MODEL,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+        "max_tokens": max_tokens, "temperature": 0.7,
+    }
+    data = _post_json(url, {"Authorization": f"Bearer {config.CLOUDFLARE_API_TOKEN}",
+                            "Content-Type": "application/json"}, payload)
+    answer = (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+    if not answer or not answer.strip():
+        raise RuntimeError("Cloudflare Workers AI returned an empty response")
+    return answer.strip()
+
+def _groq(system, user, max_tokens):
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    payload = {
+        "model": config.GROQ_MODEL,
+        "messages": [{"role": "system", "content": system},
+                     {"role": "user", "content": user}],
+        "max_tokens": max_tokens, "temperature": 0.7,
+    }
+    data = _post_json(url, {"Authorization": f"Bearer {config.GROQ_API_KEY}",
+                            "Content-Type": "application/json"}, payload)
+    answer = (data.get("choices") or [{}])[0].get("message", {}).get("content", "")
+    if not answer or not answer.strip():
+        raise RuntimeError("Groq returned an empty response")
+    return answer.strip()
+
+_PROVIDER_CALLS = {"gemini": _gemini, "cloudflare": _cloudflare, "groq": _groq}
+
+def complete(system, user, max_tokens=400):
+    """Try each configured provider in order; fall back on quota, auth, or network errors."""
+    for provider in _configured_providers():
+        try:
+            answer = _PROVIDER_CALLS[provider](system, user, max_tokens)
+            log.info("AI response generated by %s", provider)
+            return answer
+        except Exception as exc:
+            log.warning("AI provider %s failed; trying next configured provider (%s)",
+                        provider, type(exc).__name__)
+    return None
 
 def chat(message, student=None):
-    """Generate a general conversational reply for messages outside fixed bot intents."""
-    if not enabled():
-        return None
-    identity = ""
-    if student:
-        identity = (f"\nStudent context: {student.get('name', 'Student')}, "
-                    f"{student.get('department', '')}, semester {student.get('semester', '')}. "
-                    "Use this only for friendly personalization; do not infer academic records.")
-    return complete(CHAT_SYSTEM, f"Student message: {message}{identity}", max_tokens=300)
-
-
-INTENTS = ["attendance", "cie", "fees", "timetable", "notifications", "cie_calc", "certificate",
-           "cert_status", "risk", "menu", "logout", "faq"]
-
-UNDERSTAND_SYSTEM = (
-    "You are the brain of ContXpert, a friendly WhatsApp assistant for engineering college students. "
-    "Read the student's message and decide what they actually mean. Reply with JSON only: "
-    '{"intent": "<one of: ' + ", ".join(INTENTS) + ', chat>", "reply": "<text>"}.\n'
-    "Use an academic intent ONLY when the student clearly wants that feature (e.g. 'show my marks' -> cie, "
-    "'can I bunk tomorrow' -> attendance). Use faq for college rules/policy questions. "
-    "Use chat for feelings, venting, greetings, small talk, jokes, motivation, study advice and general questions; "
-    "then write the reply yourself: warm, human, 1-4 short sentences, plain text for WhatsApp, same language/style "
-    "as the student (English, Hinglish...). Acknowledge feelings first. If they are stressed about something "
-    "academic, you may gently offer the relevant option (e.g. 'want me to check your attendance? Just type attendance'). "
-    "Never say they are 'at risk' unless they asked for the risk report. Never invent college facts, marks, dates or fees. "
-    "If a student sounds in serious distress or mentions self-harm, respond with care, encourage talking to a trusted "
-    "person or the college counsellor, and mention the Tele-MANAS helpline 14416 (India). "
-    "For academic intents leave reply empty."
-)
-
-
-def understand(message, student=None):
-    """One AI call: returns (intent, reply) or None if the AI is unavailable / answered badly."""
-    who = f"Student first name: {student['name'].split()[0]}\n" if student else ""
-    raw = complete(UNDERSTAND_SYSTEM, f"{who}Student message: {message}", max_tokens=700, json_mode=True)
-    if not raw:
-        return None
-    m = re.search(r"\{.*\}", raw, re.S)
-    try:
-        data = json.loads(m.group(0)) if m else {}
-    except ValueError:
-        return None
-    intent = str(data.get("intent", "chat")).strip().lower()
-    reply = str(data.get("reply", "")).strip()
-    if intent not in INTENTS:
-        intent = "chat"
-    if intent == "chat" and not reply:
-        return None
-    return intent, reply
+    """Generate general chat; send only the student's message to the AI provider."""
+    return complete(CHAT_SYSTEM, f"Student message: {message}", max_tokens=300)

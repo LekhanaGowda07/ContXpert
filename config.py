@@ -38,24 +38,31 @@ RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
 RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")
 RAZORPAY_WEBHOOK_SECRET = os.getenv("RAZORPAY_WEBHOOK_SECRET", "")
 
-# ---- LLM (optional) ----
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")
-ANTHROPIC_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5-20251001")
+# ---- Hosted AI providers (all optional; tried in configured order) ----
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "")   # put the Gemini model name you use here or in .env
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+
+CLOUDFLARE_ACCOUNT_ID = os.getenv("CLOUDFLARE_ACCOUNT_ID", "")
+CLOUDFLARE_API_TOKEN = os.getenv("CLOUDFLARE_API_TOKEN", "")
+CLOUDFLARE_MODEL = os.getenv("CLOUDFLARE_MODEL", "@cf/meta/llama-3.1-8b-instruct")
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+# Primary-to-fallback order. Providers without credentials are skipped.
+AI_PROVIDER_ORDER = [
+    item.strip().lower()
+    for item in os.getenv("AI_PROVIDER_ORDER", "gemini,cloudflare,groq").split(",")
+    if item.strip().lower() in ("gemini", "cloudflare", "groq")
+]
+# External AI providers should not receive student academic/financial records by default.
+AI_ALLOW_STUDENT_DATA = _bool("AI_ALLOW_STUDENT_DATA", "0")
 
 # ---- Academic rules (EDIT THESE to match MCE regulations) ----
 ATTENDANCE_THRESHOLD = float(os.getenv("ATTENDANCE_THRESHOLD", "75"))  # percent
 # (csv column, label, max marks). CIE total = sum of maxima.
-# !! Set the real max marks for each component below (the numbers here are placeholders) !!
-CIE_COMPONENTS = [
-    ("cie1", "CIE-1", 20),
-    ("cie2", "CIE-2", 20),
-    ("cie3", "CIE-3", 20),
-    ("act1", "Activity-1", 10),
-    ("act2", "Activity-2", 10),
-]
-CIE_MAX = sum(c[2] for c in CIE_COMPONENTS)
+CIE_COMPONENTS = [("ia1", "IA-1", 20), ("ia2", "IA-2", 20), ("assignment", "Assignment", 10)]
+CIE_MAX = sum(c[2] for c in CIE_COMPONENTS)  # 50
 SEE_MAX = 100          # SEE paper is conducted for 100 ...
 TOTAL_MAX = 100        # ... and scaled so that CIE + scaled SEE = 100
 SEE_WEIGHT = (TOTAL_MAX - CIE_MAX) / SEE_MAX  # 0.5

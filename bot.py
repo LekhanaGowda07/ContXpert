@@ -20,7 +20,7 @@ FOOTER = "\n\nType *menu* for options."
 
 MENU_ROWS = [
     ("m_attendance", "📊 Attendance", "Subject-wise % and classes you can miss"),
-    ("m_cie", "📝 CIE Marks", "CIE and activity marks"),
+    ("m_cie", "📝 CIE Marks", "IA-1, IA-2, assignment marks"),
     ("m_fees", "💰 Fee Status", "Paid, due and last date"),
     ("m_timetable", "🗓️ Timetable", "Today, tomorrow or full week"),
     ("m_notices", "🔔 Notifications", "Latest circulars for you"),
@@ -28,11 +28,10 @@ MENU_ROWS = [
     ("m_cert", "📜 Certificates", "Request & pay for certificates"),
     ("m_risk", "🤖 AI Risk Report", "AI analysis of your academic health"),
     ("m_ask", "💬 Ask a Question", "College rules, exams, FAQs"),
-    ("m_logout", "🚪 Logout", "Unlink this number from your USN"),
 ]
 MENU_INTENT = {"m_attendance": "attendance", "m_cie": "cie", "m_fees": "fees", "m_timetable": "timetable",
                "m_notices": "notifications", "m_calc": "cie_calc", "m_cert": "certificate", "m_risk": "risk",
-               "m_ask": "ask", "m_logout": "logout"}
+               "m_ask": "ask"}
 STATUS_LABEL = {"PENDING_PAYMENT": "⏳ Awaiting payment", "PROCESSING": "🔄 Processing",
                 "READY": "✅ Ready for collection", "CANCELLED": "❌ Cancelled"}
 WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
@@ -78,17 +77,6 @@ def _handle(phone, text, reply_id, name):
         return
     intent, conf = intent_model.predict(text)
     log.info("intent=%s conf=%.2f text=%r", intent, conf, text[:60])
-    # Short, clear commands ("attendance", "show my fees") go straight through. Everything else is
-    # understood by the AI, which either picks an academic feature or replies like a person.
-    if not (conf >= 0.8 and len(text.split()) <= 4):
-        understood = llm.understand(text, student)
-        if understood:
-            intent, reply = understood
-            log.info("ai intent=%s", intent)
-            if intent == "chat":
-                return wa.send_text(phone, reply)
-        elif conf < 0.8:          # AI unavailable: don't trust a shaky classifier guess
-            intent = "unknown"
     _dispatch(phone, student, intent, text)
 
 
@@ -249,12 +237,12 @@ def _dispatch(phone, student, intent, text):
     ans = rag.answer(text)
     if ans:
         return wa.send_text(phone, ans + FOOTER)
-    # Natural conversational fallback (requires ANTHROPIC_API_KEY in .env).
+    # Natural conversational fallback (configured hosted providers are tried in order).
     # Fixed academic intents above always take priority over the general AI.
     reply = llm.chat(text, student)
     if reply:
         return wa.send_text(phone, reply + FOOTER)
-    wa.send_text(phone, "I can chat with you once an AI API key is configured. For now, try one of the menu options."
+    wa.send_text(phone, "Sorry, the AI assistant is temporarily unavailable. Please try again shortly, or type *menu* for student services."
                  + FOOTER)
 
 
@@ -450,7 +438,7 @@ def _risk_report(usn):
         tips.append("Clear pending fee dues before the last date.")
     if not reasons:
         reasons, tips = ["attendance and CIE are on track"], ["Keep it up - maintain your attendance and revise regularly."]
-    if llm.enabled():
+    if llm.enabled() and config.AI_ALLOW_STUDENT_DATA:
         summary = (f"Attendance by subject: " + ", ".join(f"{s['name']} {s['pct']}%" for s in att["subjects"]) +
                    f". Average CIE: {round(feat['avg_cie_pct'] * 100)}%. Fee due ratio: {round(feat['fee_due_ratio'] * 100)}%. "
                    f"Risk level: {level}.")
