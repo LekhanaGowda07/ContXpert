@@ -5,7 +5,6 @@
 <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f393/512.gif" width="52" alt="🎓"/>
 <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f916/512.gif" width="52" alt="🤖"/>
 <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ac/512.gif" width="52" alt="💬"/>
-<img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.gif" width="52" alt="🚀"/>
 
 <a href="https://github.com/LekhanaGowda07/ContXpert">
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=25D366&center=true&vCenter=true&width=720&height=50&lines=Check+attendance+on+WhatsApp+%F0%9F%93%8A;Get+CIE+marks+in+seconds+%F0%9F%93%9D;Request+certificates+without+queues+%F0%9F%93%9C;Powered+by+RAG+%2B+LLMs+%F0%9F%A7%A0" alt="Typing animation"/>
@@ -18,7 +17,7 @@
 ![WhatsApp](https://img.shields.io/badge/WhatsApp-Cloud%20API-25D366?style=for-the-badge&logo=whatsapp&logoColor=white)
 ![Groq](https://img.shields.io/badge/LLM-Groq-F55036?style=for-the-badge)
 ![RAG](https://img.shields.io/badge/RAG-Chroma%20%7C%20FAISS-8A2BE2?style=for-the-badge)
-![Status](https://img.shields.io/badge/status-in%20development-orange?style=for-the-badge)
+
 
 <br/>
 
@@ -104,11 +103,6 @@ No portal logins. No menu maze. Students just text the bot and get instant, pers
 <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4dc/512.gif" width="44" alt="📜"/><br/>
 <b>Certificates</b><br/>
 <sub>Request, pay online, track status</sub>
-</td>
-<td align="center">
-<img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f3eb/512.gif" width="44" alt="🏫"/><br/>
-<b>Multi-department</b><br/>
-<sub>Departments and sections supported</sub>
 </td>
 <td align="center">
 <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f525/512.gif" width="44" alt="🔥"/><br/>
