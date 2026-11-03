@@ -61,7 +61,7 @@ AI_ALLOW_STUDENT_DATA = _bool("AI_ALLOW_STUDENT_DATA", "0")
 # ---- Academic rules (EDIT THESE to match MCE regulations) ----
 ATTENDANCE_THRESHOLD = float(os.getenv("ATTENDANCE_THRESHOLD", "75"))  # percent
 # (csv column, label, max marks). CIE total = sum of maxima.
-CIE_COMPONENTS = [("ia1", "IA-1", 20), ("ia2", "IA-2", 20), ("assignment", "Assignment", 10)]
+CIE_COMPONENTS = [("cie1", "CIE-1", 10), ("cie2", "CIE-2", 10), ("cie3", "CIE-3", 10), ("act1", "Activity-1", 10), ("act2", "Activity-2", 10)]
 CIE_MAX = sum(c[2] for c in CIE_COMPONENTS)  # 50
 SEE_MAX = 100          # SEE paper is conducted for 100 ...
 TOTAL_MAX = 100        # ... and scaled so that CIE + scaled SEE = 100
