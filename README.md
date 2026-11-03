@@ -1,90 +1,266 @@
-# ContXpert - AI WhatsApp Chatbot for Smart Student Support (MCE Contineo extension)
+<div align="center">
 
-Students chat on WhatsApp to get attendance, CIE marks, fees, timetable, notifications, a CIE target
-calculator, certificate requests with online payment, and an AI risk report.
+<img src="assets/banner.svg" alt="ContXpert" width="100%"/>
 
-## AI / ML inside
-| Feature | Technique |
+<a href="https://github.com/LekhanaGowda07/ContXpert">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=22&pause=1200&color=25D366&center=true&vCenter=true&width=700&lines=Check+attendance+on+WhatsApp+%F0%9F%93%8A;Get+CIE+marks+in+seconds+%F0%9F%93%9D;Request+certificates+without+queues+%F0%9F%93%9C;Powered+by+RAG+%2B+LLMs+%F0%9F%A7%A0" alt="Typing animation"/>
+</a>
+
+![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs&logoColor=white)
+![Express](https://img.shields.io/badge/Express-4.x-000000?logo=express&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon-4169E1?logo=postgresql&logoColor=white)
+![WhatsApp](https://img.shields.io/badge/WhatsApp-Cloud%20API-25D366?logo=whatsapp&logoColor=white)
+![LLM](https://img.shields.io/badge/LLM-Groq-F55036)
+![RAG](https://img.shields.io/badge/RAG-Chroma%20%2F%20FAISS-8A2BE2)
+![Status](https://img.shields.io/badge/status-in%20development-orange)
+
+</div>
+
+---
+
+## 📖 Overview
+
+**ContXpert** extends the **MCE Contineo** student information system with a conversational AI layer on WhatsApp. Instead of logging in to a portal and clicking through menus, students simply text the bot and get instant, personalised answers about their academics.
+
+It combines a **secure, identity-bound login**, a **modular Node.js backend**, and a **Retrieval-Augmented Generation (RAG)** pipeline powered by an LLM, so the bot can answer both structured queries (marks, attendance) and free-form questions (rules, circulars, procedures).
+
+---
+
+## 🎬 See It in Action
+
+<div align="center">
+  <img src="assets/chat-demo.svg" alt="Animated chat demo" width="420"/>
+  <p><i>Login, verification and an attendance query, all inside WhatsApp.</i></p>
+</div>
+
+---
+
+## ⚡ Live Data Flow
+
+<div align="center">
+  <img src="assets/flow.svg" alt="Animated data flow" width="100%"/>
+</div>
+
+---
+
+## ✨ Features
+
+| | Feature | Description |
+|---|---|---|
+| 📊 | **Attendance** | Subject-wise attendance with low-attendance alerts |
+| 📝 | **CIE Marks** | CIE1, CIE2, CIE3, ACT1, ACT2 (10 marks each) with an aggregate calculator |
+| 💰 | **Fees** | Fee status and dues at a glance |
+| 🗓️ | **Timetable** | Day-wise class schedule |
+| 🔔 | **Notifications** | Proactive alerts and announcements |
+| 📜 | **Certificates** | Request, pay online, and track status |
+| 🏫 | **Multi-department** | Supports multiple departments and sections |
+| 🧠 | **AI Q&A** | RAG-backed answers to open-ended student queries |
+
+---
+
+## 🔐 Secure Login Flow
+
+Authentication binds a student's WhatsApp number to their college record. A student is authenticated **only if all three checks pass**.
+
+```mermaid
+flowchart LR
+    A([Student sends message]) --> B[Bot asks for USN]
+    B --> C[Bot asks for DOB]
+    C --> D{USN + DOB valid<br/>AND sender number =<br/>registered mobile?}
+    D -- Yes --> E[✅ Authenticated session]
+    D -- No --> F[❌ Access denied]
+    E --> G[Menu: Attendance · CIE · Fees · Timetable · Certificates]
+```
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+flowchart TB
+    S[👩‍🎓 Student on WhatsApp] <--> W[WhatsApp Cloud API<br/>Meta]
+    W -- webhook --> API[⚙️ Express Server<br/>Node.js]
+
+    subgraph Backend
+        API --> AUTH[🔐 Auth Module<br/>USN · DOB · Phone]
+        API --> ROUTER[🧭 Intent Router]
+        ROUTER --> ACAD[📚 Academic Services<br/>Attendance · CIE · Fees · Timetable]
+        ROUTER --> CERT[📜 Certificate Service]
+        ROUTER --> RAG[🧠 RAG Pipeline]
+    end
+
+    ACAD --> DB[(🐘 PostgreSQL<br/>Neon)]
+    AUTH --> DB
+    CERT --> DB
+    RAG --> VEC[(🔎 Vector Store<br/>Chroma / FAISS)]
+    RAG --> LLM[🤖 Groq-hosted LLM]
+    API -- reply --> W
+```
+
+### 💬 Request lifecycle
+
+```mermaid
+sequenceDiagram
+    participant U as Student
+    participant WA as WhatsApp Cloud API
+    participant S as ContXpert Server
+    participant DB as PostgreSQL
+    participant R as RAG + LLM
+
+    U->>WA: "What's my attendance?"
+    WA->>S: POST /webhook
+    S->>DB: Verify session and fetch records
+    alt Structured query
+        DB-->>S: Attendance data
+    else Open-ended query
+        S->>R: Retrieve context and generate
+        R-->>S: Grounded answer
+    end
+    S->>WA: Send reply
+    WA->>U: 📱 Response
+```
+
+---
+
+## 🧰 Tech Stack
+
+| Layer | Technology |
 |---|---|
-| Understanding free text (typos, Hinglish) | TF-IDF (word + char n-grams) + Logistic Regression intent classifier (`ml/intent.py`) |
-| Academic risk report | Gradient Boosting classifier on attendance, CIE and fee features (`ml/risk.py`) |
-| College FAQ answers | TF-IDF retrieval (RAG) over `data/faq.json`, optionally rephrased by an LLM (`ml/rag.py`, `llm.py`) |
-| Personalised study tips | Optional LLM (Anthropic API) - rule-based tips if no key |
+| **Runtime / Server** | Node.js, Express |
+| **Messaging** | Meta WhatsApp Cloud API |
+| **Database** | PostgreSQL (hosted on Neon) |
+| **AI / NLP** | Groq-hosted LLM, Retrieval-Augmented Generation |
+| **Vector Search** | Chroma / FAISS |
+| **Dev Tooling** | ngrok (local webhook tunnelling) |
 
-NOTE: the risk model is trained on *synthetic* data until you provide real history
-(`ml.risk.train_from_csv("history.csv")` with columns avg_att,min_att,n_short,avg_cie_pct,fee_due_ratio,at_risk).
+---
 
-## 1. Run locally (no WhatsApp needed)
+## 📁 Project Structure
+
+```text
+ContXpert/
+├── src/
+│   ├── server.js            # Express app entry point
+│   ├── routes/
+│   │   └── webhook.js       # WhatsApp webhook (verify + receive)
+│   ├── services/
+│   │   ├── auth.js          # USN + DOB + phone verification
+│   │   ├── attendance.js
+│   │   ├── cie.js           # CIE1-3, ACT1-2, aggregate calculator
+│   │   ├── fees.js
+│   │   ├── timetable.js
+│   │   ├── certificates.js
+│   │   └── rag.js           # Retrieval + LLM generation
+│   ├── db/                  # PostgreSQL connection and queries
+│   └── utils/               # Logger, message builders
+├── assets/                  # Animated SVGs used in this README
+├── data/                    # Mock data / CSV imports
+├── .env.example
+├── package.json
+└── README.md
 ```
-python -m venv venv
-venv\Scripts\activate          # Windows   (Mac/Linux: source venv/bin/activate)
-pip install -r requirements.txt
-copy .env.example .env         # Mac/Linux: cp .env.example .env
-python seed_mock_data.py       # only needed if data/*.csv are missing
-# put your PostgreSQL URL in .env  ->  DATABASE_URL=postgresql://user:password@localhost:5432/contxpert
-python chat_cli.py             # chat in the terminal
+
+> 📌 Adjust the tree above to match your actual folder layout.
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- A PostgreSQL database (e.g. [Neon](https://neon.tech))
+- A Meta developer account with WhatsApp Cloud API access
+- A Groq API key
+- [ngrok](https://ngrok.com) for local development
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/LekhanaGowda07/ContXpert.git
+cd ContXpert
+npm install
 ```
-Demo login: USN `4MC23CS078`, DOB `15082005` (mock). Run tests: `python -m unittest discover -s tests`.
 
-## 2. Replace mock data with real CSVs
-The CSV files in `data/` seed an empty PostgreSQL database. During local development, ContXpert now checks `data/students.csv` for file changes and UPSERTs changed student rows before student lookup, so updated USN/name/DOB data is picked up without deleting WhatsApp registrations or restarting the server. For other datasets, upload CSVs in the admin console (`/console` -> Data). The admin console remains the recommended way to update production data.
-Column names:
-- students.csv: usn,name,department,section,semester,dob(DDMMYYYY),email
-- attendance.csv: usn,subject_code,subject_name,classes_held,classes_attended
-- cie.csv: usn,subject_code,subject_name,ia1,ia2,assignment   (leave blank = not conducted yet)
-- fees.csv: usn,total_fee,paid,due_date
-- timetable.csv: department,section,semester,day(Mon..Sat),period,start,end,subject_code,subject_name,room,faculty
-- notifications.csv: date,department(or ALL),section(or ALL),title,body
-Edit marks scheme / attendance threshold in `config.py`. Certificate fees are configurable in `.env`; update the relevant `CERT_FEE_*` value and restart the app (e.g. `CERT_FEE_BONAFIDE=1` for ₹1 or `CERT_FEE_BONAFIDE=10` for ₹10). Each new certificate request uses the current configured fee; existing requests keep their original amount.
+### 2. Configure environment
 
-## 3. Meta WhatsApp Cloud API setup
-1. Go to https://developers.facebook.com -> log in -> **My Apps -> Create App** -> choose the WhatsApp / Business use case.
-2. In the app dashboard open **WhatsApp -> API Setup**. Copy the **Phone number ID** -> `WHATSAPP_PHONE_NUMBER_ID`.
-   Meta gives a free test number. Copy the **temporary access token** -> `WHATSAPP_TOKEN` (expires in ~24h).
-3. Under "To", add your own phone number as a recipient and verify the OTP (test numbers can only message recipients you add).
-4. **Permanent token** (recommended): business.facebook.com -> Business Settings -> Users -> **System users** -> Add (Admin) ->
-   Add assets (your app, full control) -> **Generate token** with `whatsapp_business_messaging` + `whatsapp_business_management`, expiry Never.
-5. **App secret**: App settings -> Basic -> App secret -> `WHATSAPP_APP_SECRET` (the server verifies Meta's signature).
-6. Set `WHATSAPP_MOCK=0` in `.env`. Never commit `.env` or share tokens.
+Create a `.env` file:
 
-## 4. Expose your server and connect the webhook
+```env
+PORT=3000
+
+# WhatsApp Cloud API
+WHATSAPP_TOKEN=your_permanent_or_temporary_access_token
+WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
+WEBHOOK_VERIFY_TOKEN=any_secret_string_you_choose
+
+# Database
+DATABASE_URL=postgresql://user:password@host/dbname?sslmode=require
+
+# LLM
+GROQ_API_KEY=your_groq_api_key
 ```
-python app.py                  # terminal 1 (port 5000)
-ngrok http 5000                # terminal 2 -> copy the https URL, e.g. https://abcd.ngrok-free.app
+
+### 3. Run the server
+
+```bash
+npm start
 ```
-Put that URL in `.env` as `BASE_URL`, restart `python app.py`.
-In Meta: **WhatsApp -> Configuration -> Webhook -> Edit**:
-- Callback URL: `https://abcd.ngrok-free.app/webhook`
-- Verify token: same as `WHATSAPP_VERIFY_TOKEN` in `.env`
-- Click **Verify and save**, then under *Webhook fields* **subscribe to `messages`**.
-Now WhatsApp the test number from your phone: "hi" -> register with USN + DOB.
-For 24/7 hosting use Render (start command: `gunicorn app:app --workers 1 --threads 4 --timeout 120`) with a PostgreSQL database (see section 8).
 
-## 5. Proactive alerts (WhatsApp rule)
-Free-form messages are only allowed within 24h of the student's last message. For the daily attendance alerts to reach everyone,
-create a **message template** (WhatsApp Manager -> Message templates, category Utility), e.g.
-`Hi {{1}}, your attendance is below 75% in: {{2}}. Reply "attendance" for details.` Once approved, set `WHATSAPP_TEMPLATE_ALERT=<template_name>`.
-Alerts run daily at `ALERT_HOUR` IST (re-sent only after `ALERT_COOLDOWN_DAYS`). Test now:
-`curl -X POST "localhost:5000/admin/run-alerts?force=1" -H "X-Admin-Key: <ADMIN_KEY>"`
+### 4. Expose it and connect WhatsApp
 
-## 6. Certificates & payments
-Student flow: Certificates -> choose -> Pay -> link. `PAYMENT_MODE=mock` serves a fake checkout at `/pay/<id>`.
-For real payments set `PAYMENT_MODE=razorpay`, add the Razorpay keys, and point a Razorpay webhook
-(event `payment_link.paid`) to `https://<your-url>/razorpay/webhook`.
-Office marks a certificate ready (student gets a WhatsApp message):
-`curl -X POST <BASE_URL>/admin/certificates/<id>/ready -H "X-Admin-Key: <ADMIN_KEY>"`  (list: `GET /admin/certificates`).
+```bash
+ngrok http 3000
+```
 
-## 7. Optional LLM
-Set `ANTHROPIC_API_KEY` (console.anthropic.com) for natural FAQ answers, personalised tips, and general conversational WhatsApp replies. Once configured, students can send normal messages (not only menu commands) and ContXpert will respond conversationally. Without a valid key, the structured student features continue to work, but general AI chat is unavailable.
+In the Meta developer dashboard, set:
 
-## Project layout
-app.py (Flask webhook/admin/payment pages) | bot.py (conversation logic) | services.py (attendance/CIE maths) | db.py (SQLite + CSV import) |
-whatsapp.py (Cloud API client) | payments.py | alerts.py (scheduler) | ml/ (intent, risk, rag) | chat_cli.py | tests/
+- **Callback URL:** `https://<your-ngrok-id>.ngrok-free.app/webhook`
+- **Verify token:** the same value as `WEBHOOK_VERIFY_TOKEN`
+- **Subscribed field:** `messages`
 
-## 8. PostgreSQL + admin console
-- Storage is PostgreSQL (`DATABASE_URL`). Tables are created automatically on start; the CSVs in `data/` seed an empty database once.
-- Admin website: open `<BASE_URL>/console` and sign in with `ADMIN_KEY`. Dashboard, certificate requests (mark ready -> WhatsApp message),
-  students (add / edit / fees / unlink WhatsApp), notices, CSV import/export of every dataset, attendance alerts.
-- The old JSON admin API (`/admin/...` with the `X-Admin-Key` header) still works.
-- Tests need an empty throw-away database: `TEST_DATABASE_URL=postgresql://... python -m unittest discover -s tests`
-  (never point it at your real database - the tests create users and certificate requests).
+Then message your WhatsApp test number. 🎉
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Core WhatsApp webhook and message handling
+- [x] USN + DOB + registered-number authentication
+- [x] CIE scheme support (5 × 10 marks)
+- [ ] Replace mock data with real CSV imports
+- [ ] Attendance alert scheduler
+- [ ] Certificate request + online payment + status tracking
+- [ ] ML-driven insights (performance and attendance risk prediction)
+- [ ] Evaluation: retrieval F1, response time, task completion
+
+---
+
+## 🔒 Security and Privacy
+
+- Identity is verified with **three factors**: USN, DOB and the sender's registered phone number
+- Students can only ever access **their own** records
+- Secrets live in environment variables and are never committed
+- Student data is stored in a managed PostgreSQL instance over TLS
+
+---
+
+## 👩‍💻 Author
+
+**Lekhana**
+*Computer Science and Engineering, Malnad College of Engineering, Hassan.*
+
+---|---|
+| Lekhana | Developer |
+
+
+*Computer Science and Engineering, Malnad College of Engineering, Hassan.*
+
+---
+
+
+<div align="center">
+
+⭐ If you find this project useful, consider giving it a star!
+
+</div>
