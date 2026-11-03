@@ -322,7 +322,7 @@ pytest tests/
 
 <img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f44b/512.gif" width="48" alt="👋"/>
 
-### Lekhana
+### Lekhana B S
 
 *Computer Science and Engineering, Malnad College of Engineering, Hassan.*
 
